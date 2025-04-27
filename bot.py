@@ -26,7 +26,8 @@ async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     resultados = []
 
     try:
-        resultados += buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados_milanuncios = buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += resultados_milanuncios
 
         resultados_wallapop = await buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += resultados_wallapop
