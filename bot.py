@@ -1,6 +1,7 @@
 import os
 import asyncio
-from telegram.ext import ApplicationBuilder, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
 from scrapers.milanuncios import buscar_milanuncios
 from scrapers.cochesnet import buscar_cochesnet
 from scrapers.wallapop import buscar_wallapop
@@ -17,8 +18,9 @@ MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
 PRECIO_MIN = 4000
 PRECIO_MAX = 12000
 
-async def buscar_ofertas(context):
-    chat_id = context.job.chat_id
+async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
+    job_data = context.job.data
+    chat_id = job_data['chat_id']
 
     await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas...")
 
@@ -47,8 +49,13 @@ async def start(update, context):
 
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    # Programar tarea periódica
-    context.job_queue.run_repeating(buscar_ofertas, interval=600, first=10, chat_id=chat_id)
+    # Programar tarea periódica bien pasando el chat_id
+    context.job_queue.run_repeating(
+        buscar_ofertas,
+        interval=600,
+        first=10,
+        data={'chat_id': chat_id}
+    )
 
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -56,3 +63,7 @@ async def main():
     app.add_handler(CommandHandler('start', start))
 
     await app.run_polling()
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
