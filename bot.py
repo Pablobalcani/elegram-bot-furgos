@@ -64,4 +64,6 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    asyncio.get_event_loop().run_until_complete(main())
