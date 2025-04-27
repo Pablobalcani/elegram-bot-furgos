@@ -1,6 +1,6 @@
 import logging
-import os
 import asyncio
+import os
 from telegram import Bot
 from telegram.ext import ApplicationBuilder, CommandHandler
 from scrapers.milanuncios import buscar_milanuncios
@@ -48,17 +48,19 @@ async def start(update, context):
     await context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
     await buscar_ofertas()
 
-async def periodic_search(context):
-    await buscar_ofertas()
+async def periodic_search():
+    while True:
+        await buscar_ofertas()
+        await asyncio.sleep(600)  # 10 minutos
 
-def main():
+async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    # ✅ Correcto: usar el JobQueue que sí trae el Application
-    app.job_queue.run_repeating(periodic_search, interval=600, first=10)
+    asyncio.create_task(periodic_search())  # 🚀 Lanzamos búsqueda cada 10 minutos manualmente
 
-    app.run_polling()
+    await app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
