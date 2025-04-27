@@ -63,7 +63,6 @@ def main():
     print("✅ Bot iniciado...")
     app.run_polling()
 
-# Railway lo llamará directamente
+# Railway ejecuta aquí
 if __name__ == "__main__":
     main()
- 
