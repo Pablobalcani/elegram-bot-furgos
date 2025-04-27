@@ -3,40 +3,38 @@ import aiohttp
 async def buscar_wallapop(modelos, precio_min, precio_max):
     resultados = []
 
-    base_url = "https://api.wallapop.com/api/v3/general/search"
     headers = {
-        "User-Agent": "Wallapop/4.53.1 Android/7.1.2",
+        "User-Agent": "Wallapop/1.0.0 (Linux; Android 10)",
+        "Accept": "application/json",
     }
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         for modelo in modelos:
             params = {
                 "keywords": modelo,
-                "filters_source": "quick_filters",
-                "order_by": "newest",
                 "price_min": precio_min,
                 "price_max": precio_max,
-                "currency": "eur",
-                "latitude": 40.4168,    # Opcional: Madrid centro
-                "longitude": -3.7038,
-                "distance": 200,        # 200 km alrededor
+                "order_by": "newest",
+                "latitude": 40.416775,  # Coordenadas (puedes cambiarlo)
+                "longitude": -3.703790,
+                "distance": 50000,  # 50 km alrededor
             }
+            url = "https://api.wallapop.com/api/v3/items"
 
-            async with session.get(base_url, headers=headers, params=params) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    items = data.get("search_objects", [])
+            async with session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    items = data.get("items", [])
 
                     for item in items:
-                        title = item.get("title", "Sin título")
-                        price = item.get("price", "Sin precio")
-                        id = item.get("id")
-                        url = f"https://es.wallapop.com/item/{id}"
+                        titulo = item.get('title', 'Sin título')
+                        precio = item.get('price', 0)
+                        enlace = f"https://es.wallapop.com/item/{item.get('id', '')}"
 
                         resultados.append({
-                            "titulo": title,
-                            "precio": price,
-                            "url": url,
+                            "titulo": titulo,
+                            "precio": f"{precio}€",
+                            "url": enlace,
                         })
 
     return resultados
