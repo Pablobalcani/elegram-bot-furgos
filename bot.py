@@ -48,15 +48,12 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    if context.job_queue:
-        context.job_queue.run_repeating(
-            buscar_ofertas,
-            interval=600,
-            first=10,
-            data={'chat_id': chat_id}
-        )
-    else:
-        await context.bot.send_message(chat_id=chat_id, text="⚠️ Error: El job_queue no está disponible.")
+    context.application.job_queue.run_repeating(
+        buscar_ofertas,
+        interval=600,
+        first=10,
+        data={'chat_id': chat_id}
+    )
 
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -64,11 +61,13 @@ async def main():
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
-    await app.run_polling()
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    await app.updater.idle()
 
 if __name__ == "__main__":
     import asyncio
     loop = asyncio.get_event_loop()
     loop.create_task(main())
     loop.run_forever()
-
