@@ -57,10 +57,12 @@ async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    asyncio.create_task(periodic_search())  # 🚀 Lanzamos búsqueda cada 10 minutos manualmente
+    asyncio.create_task(periodic_search())  # Lanzamos periodic_search
 
     await app.run_polling()
 
+# 🚨 AQUI EL BLOQUE FINAL CORRECTO:
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
