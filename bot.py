@@ -53,7 +53,7 @@ async def buscar_ofertas():
 
 async def start(update, context):
     global CHAT_ID
-    CHAT_ID = update.message.chat_id
+    CHAT_ID = update.effective_chat.id
     await context.bot.send_message(chat_id=CHAT_ID, text="🤖 Bot activado. Buscaré cada 10 minutos.")
     await buscar_ofertas()
 
