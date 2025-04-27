@@ -1,6 +1,5 @@
 import os
 import asyncio
-from telegram import Bot
 from telegram.ext import ApplicationBuilder, CommandHandler
 from scrapers.milanuncios import buscar_milanuncios
 from scrapers.cochesnet import buscar_cochesnet
@@ -14,22 +13,14 @@ if not TOKEN:
     print("ERROR: No se encontró el TOKEN de Telegram.")
     exit(1)
 
-CHAT_ID = ''
-
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
 PRECIO_MIN = 4000
 PRECIO_MAX = 12000
 
-bot = Bot(token=TOKEN)
+async def buscar_ofertas(context):
+    chat_id = context.job.chat_id
 
-async def buscar_ofertas():
-    global CHAT_ID
-
-    if not CHAT_ID:
-        print("❌ No hay CHAT_ID definido todavía.")
-        return
-
-    await bot.send_message(chat_id=CHAT_ID, text="🔍 Buscando ofertas...")
+    await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas...")
 
     resultados = []
 
@@ -40,45 +31,28 @@ async def buscar_ofertas():
         resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
     except Exception as e:
-        if CHAT_ID:
-            await bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Error buscando ofertas: {e}")
-        print(f"Error en buscar_ofertas: {e}")
+        await context.bot.send_message(chat_id=chat_id, text=f"⚠️ Error buscando ofertas: {e}")
         return
 
     if not resultados:
-        if CHAT_ID:
-            await bot.send_message(chat_id=CHAT_ID, text="❌ No se han encontrado ofertas nuevas esta vez.")
+        await context.bot.send_message(chat_id=chat_id, text="❌ No se han encontrado ofertas nuevas esta vez.")
     else:
-        if CHAT_ID:
-            await bot.send_message(chat_id=CHAT_ID, text=f"✅ {len(resultados)} ofertas encontradas. Enviando...")
+        await context.bot.send_message(chat_id=chat_id, text=f"✅ {len(resultados)} ofertas encontradas. Enviando...")
         for oferta in resultados:
-            if CHAT_ID:
-                await bot.send_message(chat_id=CHAT_ID, text=formatear_mensaje(oferta))
+            await context.bot.send_message(chat_id=chat_id, text=formatear_mensaje(oferta))
             await asyncio.sleep(2)
 
 async def start(update, context):
-    global CHAT_ID
+    chat_id = update.effective_chat.id
 
-    CHAT_ID = update.effective_chat.id
-    print(f"✅ Nuevo CHAT_ID guardado: {CHAT_ID}")
+    await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    await context.bot.send_message(chat_id=CHAT_ID, text="🤖 Bot activado. Empezando búsqueda...")
-
-    await buscar_ofertas()
-
-async def periodic_search(app):
-    while True:
-        await buscar_ofertas()
-        await asyncio.sleep(600)  # 10 minutos
+    # Programar tarea periódica
+    context.job_queue.run_repeating(buscar_ofertas, interval=600, first=10, chat_id=chat_id)
 
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
+
     app.add_handler(CommandHandler('start', start))
 
-    asyncio.create_task(periodic_search(app))
-
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-    await app.stop()
- 
+    await app.run_polling()
