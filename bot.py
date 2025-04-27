@@ -29,9 +29,9 @@ async def buscar_ofertas():
 
     resultados += buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
     resultados += buscar_cochesnet(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
+    resultados += await buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
+    resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
+    resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
 
     if not resultados:
         if CHAT_ID:
