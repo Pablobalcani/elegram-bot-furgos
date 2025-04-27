@@ -48,19 +48,20 @@ async def start(update, context):
     await context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
     await buscar_ofertas()
 
-async def periodic_search(app):
+async def periodic_search():
     while True:
         await buscar_ofertas()
         await asyncio.sleep(600)  # 10 minutos
 
-def main():
+async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    # Lanza búsqueda periódica en segundo plano
-    app.job_queue.run_repeating(lambda _: asyncio.create_task(buscar_ofertas()), interval=600, first=10)
+    # Lanzar tarea de búsqueda periódica en segundo plano
+    asyncio.create_task(periodic_search())
 
-    app.run_polling()
+    await app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
