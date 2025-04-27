@@ -1,6 +1,6 @@
 import logging
-import asyncio
 import os
+import asyncio
 from telegram import Bot
 from telegram.ext import ApplicationBuilder, CommandHandler
 from scrapers.milanuncios import buscar_milanuncios
@@ -48,21 +48,20 @@ async def start(update, context):
     await context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
     await buscar_ofertas()
 
-async def periodic_search():
+async def periodic_search(app):
     while True:
         await buscar_ofertas()
-        await asyncio.sleep(600)  # 10 minutos
+        await asyncio.sleep(600)  # Cada 10 minutos
 
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    asyncio.create_task(periodic_search())  # Lanzamos periodic_search
+    # Aquí lanzamos la búsqueda periódica después de arrancar
+    asyncio.create_task(periodic_search(app))
 
     await app.run_polling()
 
-# 🚨 AQUI EL BLOQUE FINAL CORRECTO:
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.create_task(main())
-    loop.run_forever()
+# 🚀 FINAL MUY SIMPLE Y LIMPIO:
+import asyncio
+asyncio.run(main())
