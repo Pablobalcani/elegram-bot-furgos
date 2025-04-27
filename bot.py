@@ -19,8 +19,7 @@ PRECIO_MIN = 4000
 PRECIO_MAX = 12000
 
 async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
-    job_data = context.job.data
-    chat_id = job_data['chat_id']
+    chat_id = context.job.data['chat_id']
 
     await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas...")
 
@@ -41,4 +40,30 @@ async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     else:
         await context.bot.send_message(chat_id=chat_id, text=f"✅ {len(resultados)} ofertas encontradas. Enviando...")
         for oferta in resultados:
-            await context.bot.send_message(chat_id=
+            await context.bot.send_message(chat_id=chat_id, text=formatear_mensaje(oferta))
+            await asyncio.sleep(2)
+
+async def start(update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+
+    await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
+
+    context.job_queue.run_repeating(
+        buscar_ofertas,
+        interval=600,
+        first=10,
+        data={'chat_id': chat_id}
+    )
+
+async def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler('start', start))
+
+    await app.run_polling()
+
+# Railway necesita esto:
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
