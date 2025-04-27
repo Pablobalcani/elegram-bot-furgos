@@ -61,13 +61,7 @@ async def main():
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-    await app.updater.idle()
+    await app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(main())
-    loop.run_forever()
+    asyncio.run(main())
