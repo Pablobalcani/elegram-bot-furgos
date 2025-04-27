@@ -1,34 +1,31 @@
-
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
 
-def buscar_milanuncios(modelos, precio_min, precio_max):
+async def buscar_milanuncios(modelos, precio_min, precio_max):
     resultados = []
-    url = 'https://www.milanuncios.com/furgonetas-de-segunda-mano/'
-    headers = {'User-Agent': 'Mozilla/5.0'}
 
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'lxml')
-            anuncios = soup.select('.aditem')
+    async with aiohttp.ClientSession() as session:
+        for modelo in modelos:
+            url = f"https://www.milanuncios.com/coches-de-segunda-mano/{modelo.replace(' ', '-')}.htm?desde={precio_min}&hasta={precio_max}"
+            async with session.get(url) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    anuncios = soup.find_all('div', class_='aditem')
 
-            for anuncio in anuncios:
-                titulo = anuncio.select_one('.aditem-detail-title')
-                precio_texto = anuncio.select_one('.aditem-price')
+                    for anuncio in anuncios:
+                        titulo_tag = anuncio.find('a', class_='aditem-detail-title')
+                        precio_tag = anuncio.find('span', class_='aditem-price')
 
-                if titulo and precio_texto:
-                    titulo_text = titulo.get_text(strip=True).lower()
-                    precio_num = ''.join(filter(str.isdigit, precio_texto.get_text()))
-                    precio = int(precio_num) if precio_num else 999999
+                        if titulo_tag and precio_tag:
+                            titulo = titulo_tag.text.strip()
+                            precio = precio_tag.text.strip()
+                            enlace = "https://www.milanuncios.com" + titulo_tag.get('href')
 
-                    if any(modelo in titulo_text for modelo in modelos) and precio_min <= precio <= precio_max:
-                        link = anuncio.select_one('a')['href']
-                        if not link.startswith('http'):
-                            link = 'https://www.milanuncios.com' + link
-                        resultados.append(f"{titulo_text.title()}\nPrecio: {precio}€\n{link}")
+                            resultados.append({
+                                'titulo': titulo,
+                                'precio': precio,
+                                'url': enlace
+                            })
 
-    except Exception as e:
-        print(f"Error en Milanuncios: {e}")
-    
     return resultados
