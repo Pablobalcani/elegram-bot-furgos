@@ -47,7 +47,9 @@ def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    schedule.every(10).minutes.do(buscar_ofertas)
+import asyncio
+
+schedule.every(10).minutes.do(lambda: asyncio.run(buscar_ofertas()))
 
     # Hilo para ejecutar schedule en segundo plano
     def run_schedule():
