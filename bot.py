@@ -55,15 +55,15 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
         data={'chat_id': chat_id}
     )
 
-async def main():
+def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
-    await app.run_polling()
+    app.run_polling()
 
+# Railway lo llamará directamente
 if __name__ == "__main__":
-    import uvloop
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    asyncio.get_event_loop().run_until_complete(main())
+    main()
+ 
