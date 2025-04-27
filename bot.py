@@ -1,14 +1,18 @@
-
 import logging
 import schedule
 import time
 import os
+import threading
 from telegram import Bot
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler
 from scrapers.milanuncios import buscar_milanuncios
 from scrapers.cochesnet import buscar_cochesnet
 
-TOKEN = os.getenv('TOKEN')  # Leer token de variable de entorno
+TOKEN = os.getenv('TOKEN')
+if not TOKEN:
+    print("ERROR: No se encontró el TOKEN de Telegram. Configura la variable de entorno TOKEN.")
+    exit(1)
+
 CHAT_ID = ''
 
 MODELOS = ['rifter', 'berlingo', 'tourneo courier', 'doblo']
@@ -39,17 +43,20 @@ def start(update, context):
     buscar_ofertas()
 
 def main():
-    updater = Updater(token=TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler('start', start))
-
-    updater.start_polling()
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler('start', start))
 
     schedule.every(10).minutes.do(buscar_ofertas)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(30)
+    # Hilo para ejecutar schedule en segundo plano
+    def run_schedule():
+        while True:
+            schedule.run_pending()
+            time.sleep(30)
+
+    threading.Thread(target=run_schedule, daemon=True).start()
+
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
