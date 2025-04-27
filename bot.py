@@ -24,18 +24,28 @@ bot = Bot(token=TOKEN)
 
 async def buscar_ofertas():
     global CHAT_ID
+    if CHAT_ID:
+        await bot.send_message(chat_id=CHAT_ID, text="🔍 Buscando ofertas ahora mismo...")
+
     resultados = []
 
-    resultados += buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += buscar_cochesnet(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += await buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
+    try:
+        resultados += buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += buscar_cochesnet(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += await buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
+    except Exception as e:
+        if CHAT_ID:
+            await bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Error buscando ofertas: {e}")
+        return
 
     if not resultados:
         if CHAT_ID:
-            await bot.send_message(chat_id=CHAT_ID, text="No se han encontrado ofertas nuevas.")
+            await bot.send_message(chat_id=CHAT_ID, text="❌ No se han encontrado ofertas nuevas esta vez.")
     else:
+        if CHAT_ID:
+            await bot.send_message(chat_id=CHAT_ID, text=f"✅ {len(resultados)} ofertas encontradas. Enviando...")
         for oferta in resultados:
             if CHAT_ID:
                 await bot.send_message(chat_id=CHAT_ID, text=formatear_mensaje(oferta))
@@ -44,7 +54,7 @@ async def buscar_ofertas():
 async def start(update, context):
     global CHAT_ID
     CHAT_ID = update.message.chat_id
-    await context.bot.send_message(chat_id=CHAT_ID, text="¡Bot activado! Buscaré cada 10 minutos.")
+    await context.bot.send_message(chat_id=CHAT_ID, text="🤖 Bot activado. Buscaré cada 10 minutos.")
     await buscar_ofertas()
 
 async def periodic_search(app):
