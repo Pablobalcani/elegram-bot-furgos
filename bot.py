@@ -34,31 +34,4 @@ async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     if not resultados:
         await context.bot.send_message(chat_id=chat_id, text="❌ No se han encontrado ofertas nuevas esta vez.")
     else:
-        await context.bot.send_message(chat_id=chat_id, text=f"✅ {len(resultados)} ofertas encontradas. Enviando...")
-        for oferta in resultados:
-            await context.bot.send_message(chat_id=chat_id, text=formatear_mensaje(oferta))
-            await asyncio.sleep(2)
-
-async def start(update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    await update.message.reply_text("🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
-
-    context.application.job_queue.run_repeating(
-        buscar_ofertas,
-        interval=600,  # 10 minutos
-        first=10,
-        data={'chat_id': chat_id}
-    )
-
-async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler('start', start))
-
-    print("✅ Bot iniciado...")
-    await app.start()
-    await app.updater.start_polling()
-    await app.updater.idle()
-
-if __name__ == "__main__":
-    nest_asyncio.apply()
-    asyncio.run(main())
+        await context.bot.send_message(chat_id=chat_id, text=f"✅ {len(resultados)} ofertas encontradas. Envi_
