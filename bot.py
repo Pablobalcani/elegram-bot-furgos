@@ -1,6 +1,7 @@
 import os
 import asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import nest_asyncio
 
 from scrapers.milanuncios import buscar_milanuncios
 from scrapers.cochesnet import buscar_cochesnet
@@ -11,7 +12,7 @@ from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
 if not TOKEN:
-    print("ERROR: No se encontró el TOKEN de Telegram.")
+    print("❌ ERROR: No se encontró el TOKEN de Telegram.")
     exit(1)
 
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
@@ -56,19 +57,14 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).post_init(lambda app: app.job_queue).build()
 
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
     await app.run_polling()
 
-import asyncio
-
-# resto del código arriba...
-
 if __name__ == "__main__":
-    import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().create_task(main())
     asyncio.get_event_loop().run_forever()
