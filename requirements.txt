@@ -2,4 +2,5 @@ python-telegram-bot==20.6
 aiohttp
 beautifulsoup4
 lxml
-requestsnest_asyncio
+requests
+nest_asyncio
