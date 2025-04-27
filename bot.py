@@ -9,6 +9,7 @@ from scrapers.autocasion import buscar_autocasion
 from scrapers.autoscout24 import buscar_autoscout24
 from utils.formatting import formatear_mensaje
 
+# Cargar el token de Telegram desde las variables de entorno
 TOKEN = os.getenv('TOKEN')
 if not TOKEN:
     print("ERROR: No se encontró el TOKEN de Telegram.")
@@ -44,15 +45,15 @@ async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=chat_id, text=formatear_mensaje(oferta))
             await asyncio.sleep(2)
 
-async def start(update, context):
+async def start(update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    # Programar tarea periódica bien pasando el chat_id
+    # Programar tarea periódica
     context.job_queue.run_repeating(
         buscar_ofertas,
-        interval=600,
+        interval=600,  # cada 10 minutos
         first=10,
         data={'chat_id': chat_id}
     )
@@ -66,6 +67,4 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(main())
-    loop.run_forever()
+    asyncio.run(main())
