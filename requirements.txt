@@ -1,8 +1,6 @@
-python-telegram-bot==20.3
+python-telegram-bot==20.6
 requests
 beautifulsoup4
 lxml
 aiohttp
-asyncio
-python-telegram-bot==20.6
 uvloop
