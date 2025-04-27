@@ -1,4 +1,3 @@
-import logging
 import os
 import asyncio
 from telegram import Bot
@@ -12,7 +11,7 @@ from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
 if not TOKEN:
-    print("ERROR: No se encontró el TOKEN de Telegram. Configura la variable de entorno TOKEN.")
+    print("ERROR: No se encontró el TOKEN de Telegram.")
     exit(1)
 
 CHAT_ID = ''
@@ -35,7 +34,7 @@ async def buscar_ofertas():
 
     if not resultados:
         if CHAT_ID:
-            await bot.send_message(chat_id=CHAT_ID, text="No se han encontrado ofertas nuevas esta vez.")
+            await bot.send_message(chat_id=CHAT_ID, text="No se han encontrado ofertas nuevas.")
     else:
         for oferta in resultados:
             if CHAT_ID:
@@ -45,23 +44,21 @@ async def buscar_ofertas():
 async def start(update, context):
     global CHAT_ID
     CHAT_ID = update.message.chat_id
-    await context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
+    await context.bot.send_message(chat_id=CHAT_ID, text="¡Bot activado! Buscaré cada 10 minutos.")
     await buscar_ofertas()
 
 async def periodic_search(app):
     while True:
         await buscar_ofertas()
-        await asyncio.sleep(600)  # Cada 10 minutos
+        await asyncio.sleep(600)  # 10 minutos
 
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    # Aquí lanzamos la búsqueda periódica después de arrancar
     asyncio.create_task(periodic_search(app))
 
-    await app.run_polling()
-
-# 🚀 FINAL MUY SIMPLE Y LIMPIO:
-import asyncio
-asyncio.run(main())
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    await app.stop()
