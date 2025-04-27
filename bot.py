@@ -24,8 +24,12 @@ bot = Bot(token=TOKEN)
 
 async def buscar_ofertas():
     global CHAT_ID
-    if CHAT_ID:
-        await bot.send_message(chat_id=CHAT_ID, text="🔍 Buscando ofertas ahora mismo...")
+
+    if not CHAT_ID:
+        print("❌ No hay CHAT_ID definido todavía.")
+        return
+
+    await bot.send_message(chat_id=CHAT_ID, text="🔍 Buscando ofertas...")
 
     resultados = []
 
@@ -38,6 +42,7 @@ async def buscar_ofertas():
     except Exception as e:
         if CHAT_ID:
             await bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Error buscando ofertas: {e}")
+        print(f"Error en buscar_ofertas: {e}")
         return
 
     if not resultados:
@@ -53,8 +58,12 @@ async def buscar_ofertas():
 
 async def start(update, context):
     global CHAT_ID
+
     CHAT_ID = update.effective_chat.id
-    await context.bot.send_message(chat_id=CHAT_ID, text="🤖 Bot activado. Buscaré cada 10 minutos.")
+    print(f"✅ Nuevo CHAT_ID guardado: {CHAT_ID}")
+
+    await context.bot.send_message(chat_id=CHAT_ID, text="🤖 Bot activado. Empezando búsqueda...")
+
     await buscar_ofertas()
 
 async def periodic_search(app):
@@ -72,3 +81,4 @@ async def main():
     await app.start()
     await app.updater.start_polling()
     await app.stop()
+ 
