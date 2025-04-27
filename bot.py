@@ -36,10 +36,10 @@ def buscar_ofertas():
                 bot.send_message(chat_id=CHAT_ID, text=oferta)
             time.sleep(2)
 
-def start(update, context):
+async def start(update, context):
     global CHAT_ID
     CHAT_ID = update.message.chat_id
-    context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
+    await context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
     buscar_ofertas()
 
 def main():
