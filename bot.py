@@ -53,15 +53,13 @@ async def periodic_search(application):
         await buscar_ofertas()
         await asyncio.sleep(600)
 
-async def main():
+def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
 
-    # Lanza búsqueda periódica en segundo plano
     app.create_task(periodic_search(app))
 
-    await app.run_polling()
+    app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
