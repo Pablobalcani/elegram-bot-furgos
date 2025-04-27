@@ -63,5 +63,12 @@ async def main():
     print("✅ Bot iniciado...")
     await app.run_polling()
 
+import asyncio
+
+# resto del código arriba...
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    import nest_asyncio
+    nest_asyncio.apply()
+    asyncio.get_event_loop().create_task(main())
+    asyncio.get_event_loop().run_forever()
