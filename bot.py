@@ -41,7 +41,7 @@ async def start(update, context):
     global CHAT_ID
     CHAT_ID = update.message.chat_id
     await context.bot.send_message(chat_id=CHAT_ID, text="¡Hola! Bot activado. Buscaré ofertas nuevas cada 10 minutos.")
-    buscar_ofertas()
+    await buscar_ofertas()
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
