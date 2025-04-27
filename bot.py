@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import schedule
 import time
@@ -21,7 +22,7 @@ PRECIO_MAX = 8000
 
 bot = Bot(token=TOKEN)
 
-def buscar_ofertas():
+async def buscar_ofertas():
     global CHAT_ID
     resultados = []
     resultados += buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
@@ -29,12 +30,12 @@ def buscar_ofertas():
 
     if not resultados:
         if CHAT_ID:
-            bot.send_message(chat_id=CHAT_ID, text="No se han encontrado ofertas nuevas esta vez.")
+            await bot.send_message(chat_id=CHAT_ID, text="No se han encontrado ofertas nuevas esta vez.")
     else:
         for oferta in resultados:
             if CHAT_ID:
-                bot.send_message(chat_id=CHAT_ID, text=oferta)
-            time.sleep(2)
+                await bot.send_message(chat_id=CHAT_ID, text=oferta)
+            await asyncio.sleep(2)
 
 async def start(update, context):
     global CHAT_ID
