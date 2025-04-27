@@ -26,8 +26,8 @@ async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     resultados = []
 
     try:
-        resultados += buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
-        resultados += buscar_cochesnet(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += await buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
+        resultados += await buscar_cochesnet(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
@@ -48,21 +48,24 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    context.job_queue.run_repeating(
-        buscar_ofertas,
-        interval=600,
-        first=10,
-        data={'chat_id': chat_id}
-    )
+    if context.job_queue:
+        context.job_queue.run_repeating(
+            buscar_ofertas,
+            interval=600,
+            first=10,
+            data={'chat_id': chat_id}
+        )
+    else:
+        await context.bot.send_message(chat_id=chat_id, text="⚠️ Error: El job_queue no está disponible.")
 
-def main():
+async def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
-    app.run_polling()
+    await app.run_polling()
 
-# Railway ejecuta aquí
+# Railway arranque
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
