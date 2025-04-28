@@ -19,22 +19,25 @@ async def buscar_milanuncios(modelos, precio_min, precio_max):
                     html = await response.text()
                     soup = BeautifulSoup(html, 'html.parser')
 
-                    anuncios = soup.find_all('div', class_='ad-item')
+                    # Aquí corregimos: buscamos en los scripts JSON
+                    scripts = soup.find_all('script', type="application/ld+json")
+                    for script in scripts:
+                        try:
+                            import json
+                            data = json.loads(script.string)
 
-                    for anuncio in anuncios:
-                        titulo_tag = anuncio.find('a', class_='aditem-detail-title')
-                        precio_tag = anuncio.find('span', class_='aditem-price')
-                        enlace_tag = anuncio.find('a', href=True)
+                            if isinstance(data, dict) and data.get('@type') == 'Product':
+                                titulo = data.get('name', 'Sin título')
+                                precio = f"{data.get('offers', {}).get('price', 'Sin precio')} €"
+                                enlace = data.get('offers', {}).get('url', '')
 
-                        if titulo_tag and precio_tag and enlace_tag:
-                            titulo = titulo_tag.text.strip()
-                            precio = precio_tag.text.strip()
-                            enlace = "https://www.milanuncios.com" + enlace_tag['href']
-
-                            resultados.append({
-                                'titulo': titulo,
-                                'precio': precio,
-                                'url': enlace,
-                            })
+                                if enlace:
+                                    resultados.append({
+                                        'titulo': titulo,
+                                        'precio': precio,
+                                        'url': enlace
+                                    })
+                        except Exception:
+                            continue
 
     return resultados
