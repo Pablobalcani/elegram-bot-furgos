@@ -3,14 +3,20 @@ import aiohttp
 async def buscar_milanuncios(modelos, precio_min, precio_max):
     resultados = []
 
-    async with aiohttp.ClientSession() as session:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://www.milanuncios.com/",
+    }
+
+    async with aiohttp.ClientSession(headers=headers) as session:
         for modelo in modelos:
             params = {
-                "CategoryId": 32,  # Categoría de coches
+                "CategoryId": 32,
                 "Text": modelo,
                 "FromPrice": precio_min,
                 "ToPrice": precio_max,
-                "Start": 1  # Empezar desde el primer anuncio
+                "Start": 1
             }
             url = "https://www.milanuncios.com/ajx/buscador/"
 
