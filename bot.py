@@ -3,17 +3,11 @@ import asyncio
 import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-from scrapers.milanuncios import buscar_milanuncios
 from scrapers.cochesnet import buscar_cochesnet
-from scrapers.autocasion import buscar_autocasion
 from scrapers.autoscout24 import buscar_autoscout24
 from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
-
-if not TOKEN:
-    print("❌ No se encontró el TOKEN de Telegram.")
-    exit(1)
 
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
 PRECIO_MIN = 4000
@@ -22,14 +16,12 @@ PRECIO_MAX = 12000
 async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.data['chat_id']
 
-    await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas...")
+    await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas en coches.net y autoscout24...")
 
     resultados = []
 
     try:
-        resultados += await buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_cochesnet(MODELOS, PRECIO_MIN, PRECIO_MAX)
-        resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
     except Exception as e:
         await context.bot.send_message(chat_id=chat_id, text=f"⚠️ Error buscando ofertas: {e}")
@@ -51,7 +43,7 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     context.application.job_queue.run_repeating(
         buscar_ofertas,
         interval=600,
-        first=10,
+        first=5,
         data={'chat_id': chat_id}
     )
 
