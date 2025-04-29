@@ -3,8 +3,21 @@ import aiohttp
 async def buscar_cochesnet(modelos, precio_min, precio_max):
     resultados = []
 
+    # Mapeo de los modelos a sus MakeId y ModelId reales
+    modelo_a_ids = {
+        'rifter': (33, 1252),
+        'berlingo combi': (15, 1127),
+        'tourneo courier': (14, 694),
+        'doblo': (15, 300),
+    }
+
     async with aiohttp.ClientSession() as session:
-        for modelo, ids in modelos.items():
+        for modelo in modelos:
+            ids = modelo_a_ids.get(modelo.lower())
+            if not ids:
+                print(f"⚠️ IDs no encontrados para modelo {modelo}")
+                continue
+
             make_id, model_id = ids
             url = f"https://web.gw.coches.net/semantic/segunda-mano/?MakeIds%5B0%5D={make_id}&ModelIds%5B0%5D={model_id}"
 
@@ -12,11 +25,7 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-
-                        if isinstance(data, list) and data and isinstance(data[0], dict):
-                            anuncios = data[0].get('listAds', [])
-                        else:
-                            anuncios = []
+                        anuncios = data[0].get('listAds', []) if isinstance(data, list) and data else []
 
                         for anuncio in anuncios:
                             titulo = anuncio.get('title', 'Sin título')
@@ -28,7 +37,6 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
                                 'precio': f"{precio}€",
                                 'url': enlace
                             })
-
                     elif response.status == 404:
                         print(f"ℹ️ No hay coches disponibles para {modelo} (404).")
                     else:
