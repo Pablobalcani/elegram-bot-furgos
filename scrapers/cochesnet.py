@@ -1,72 +1,42 @@
-import os
-import asyncio
-import nest_asyncio
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import aiohttp
 
-from scrapers.milanuncios import buscar_milanuncios
-from scrapers.wallapop import buscar_wallapop
-from scrapers.autocasion import buscar_autocasion
-from scrapers.autoscout24 import buscar_autoscout24
-from utils.formatting import formatear_mensaje
-
-TOKEN = os.getenv('TOKEN')
-
-# Modelos para scrapers de búsqueda por texto
-MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
-
-# Modelos para coches.net (requiere MakeId y ModelId)
-MODELOS_COCHESNET = {
-    'rifter': (33, 1252),
-    'berlingo combi': (15, 1127),
-    'tourneo courier': (14, 694),
-    'doblo': (23, 868)
-}
-
-PRECIO_MIN = 4000
-PRECIO_MAX = 18000  # Puedes ajustar este precio
-
-async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = context.job.data['chat_id']
-    await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas...")
-
+async def buscar_cochesnet(modelos_cochesnet, precio_min, precio_max):
     resultados = []
 
-    try:
-        resultados += await buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
-        resultados += await buscar_cochesnet(MODELOS_COCHESNET, PRECIO_MIN, PRECIO_MAX)
-        resultados += await buscar_wallapop(MODELOS, PRECIO_MIN, PRECIO_MAX)
-        resultados += await buscar_autocasion(MODELOS, PRECIO_MIN, PRECIO_MAX)
-        resultados += await buscar_autoscout24(MODELOS, PRECIO_MIN, PRECIO_MAX)
-    except Exception as e:
-        await context.bot.send_message(chat_id=chat_id, text=f"⚠️ Error buscando ofertas: {e}")
-        return
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0; +https://github.com)",
+    }
 
-    if not resultados:
-        await context.bot.send_message(chat_id=chat_id, text="❌ No se han encontrado ofertas nuevas.")
-    else:
-        await context.bot.send_message(chat_id=chat_id, text=f"✅ {len(resultados)} ofertas encontradas. Enviando...")
-        for oferta in resultados:
-            await context.bot.send_message(chat_id=chat_id, text=formatear_mensaje(oferta))
-            await asyncio.sleep(2)
+    async with aiohttp.ClientSession(headers=headers) as session:
+        for modelo, (make_id, model_id) in modelos_cochesnet.items():
+            url = f"https://web.gw.coches.net/semantic/segunda-mano/?MakeIds%5B0%5D={make_id}&ModelIds%5B0%5D={model_id}&PriceFrom={precio_min}&PriceTo={precio_max}"
 
-async def start(update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
+            try:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        anuncios = data.get('listAds', [])
 
-    context.job_queue.run_repeating(
-        buscar_ofertas,
-        interval=600,  # 10 minutos
-        first=10,
-        data={'chat_id': chat_id}
-    )
+                        for anuncio in anuncios:
+                            titulo = anuncio.get('title', 'Sin título')
+                            precio = anuncio.get('price', 0)
+                            enlace = anuncio.get('url', '')
 
-async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler('start', start))
+                            if enlace:
+                                enlace = "https://coches.net" + enlace
 
-    print("✅ Bot iniciado...")
-    await app.run_polling()
+                            resultados.append({
+                                'titulo': titulo,
+                                'precio': f"{precio}€",
+                                'url': enlace
+                            })
 
-if __name__ == "__main__":
-    nest_asyncio.apply()
-    asyncio.get_event_loop().run_until_complete(main())
+                    elif response.status == 404:
+                        print(f"ℹ️ No hay coches disponibles para {modelo} (404).")
+                    else:
+                        print(f"⚠️ Error inesperado coches.net para modelo {modelo}: {response.status}")
+            except Exception as e:
+                print(f"⚠️ Excepción en coches.net para {modelo}: {e}")
+
+    return resultados
