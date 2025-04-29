@@ -1,11 +1,10 @@
 import aiohttp
 
-# Diccionario modelo -> (MakeId, ModelId)
 MODELOS_IDS = {
-    "rifter": (50, 34124),
-    "berlingo": (50, 22113),
-    "tourneo courier": (27, 30646),
-    "doblo": (26, 19617)
+    "rifter": (50, 30883),
+    "berlingo": (11, 1831),
+    "tourneo courier": (27, 29807),
+    "doblo": (26, 1909)
 }
 
 async def buscar_cochesnet(modelos, precio_min, precio_max):
@@ -18,7 +17,8 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
 
     async with aiohttp.ClientSession(headers=headers) as session:
         for modelo in modelos:
-            make_id, model_id = MODELOS_IDS.get(modelo, (None, None))
+            modelo_normalizado = modelo.lower().strip().replace(" combi", "")
+            make_id, model_id = MODELOS_IDS.get(modelo_normalizado, (None, None))
             if not make_id or not model_id:
                 print(f"⚠️ IDs no encontrados para modelo {modelo}")
                 continue
