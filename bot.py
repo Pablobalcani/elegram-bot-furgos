@@ -62,11 +62,16 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def main():
-    app = ApplicationBuilder().token(TOKEN).post_init(lambda app: app.job_queue).build()
+    app = ApplicationBuilder().token(TOKEN).build()
+
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
-    await app.run_polling()
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    await app.updater.idle()
+∫
 
 if __name__ == "__main__":
     nest_asyncio.apply()
