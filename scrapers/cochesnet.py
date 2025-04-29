@@ -3,29 +3,22 @@ import aiohttp
 async def buscar_cochesnet(modelos, precio_min, precio_max):
     resultados = []
 
-    # Mapeo de los modelos a sus MakeId y ModelId reales
-    modelo_a_ids = {
-        'rifter': (33, 1252),
-        'berlingo combi': (15, 1127),
-        'tourneo courier': (14, 694),
-        'doblo': (15, 300),
-    }
-
     async with aiohttp.ClientSession() as session:
-        for modelo in modelos:
-            ids = modelo_a_ids.get(modelo.lower())
-            if not ids:
-                print(f"⚠️ IDs no encontrados para modelo {modelo}")
-                continue
-
+        for modelo, ids in modelos.items():
             make_id, model_id = ids
-            url = f"https://web.gw.coches.net/semantic/segunda-mano/?MakeIds%5B0%5D={make_id}&ModelIds%5B0%5D={model_id}"
+            url = (
+                f"https://web.gw.coches.net/semantic/segunda-mano/"
+                f"?MakeIds%5B0%5D={make_id}&ModelIds%5B0%5D={model_id}"
+                f"&PriceFrom={precio_min}&PriceTo={precio_max}"
+            )
 
             try:
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        anuncios = data[0].get('listAds', []) if isinstance(data, list) and data else []
+
+                        # Extraer anuncios correctamente
+                        anuncios = data.get('listAds', [])
 
                         for anuncio in anuncios:
                             titulo = anuncio.get('title', 'Sin título')
@@ -35,8 +28,9 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
                             resultados.append({
                                 'titulo': titulo,
                                 'precio': f"{precio}€",
-                                'url': enlace
+                                'url': f"https://www.coches.net{enlace}" if enlace else ''
                             })
+
                     elif response.status == 404:
                         print(f"ℹ️ No hay coches disponibles para {modelo} (404).")
                     else:
