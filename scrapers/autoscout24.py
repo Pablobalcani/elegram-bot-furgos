@@ -1,52 +1,46 @@
 import aiohttp
-from bs4 import BeautifulSoup
 
-async def buscar_autoscout24(modelos, precio_min, precio_max, paginas=3):
+async def buscar_autoscout24(modelos, precio_min, precio_max):
     resultados = []
 
-    async with aiohttp.ClientSession() as session:
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json",
+    }
+
+    async with aiohttp.ClientSession(headers=headers) as session:
         for modelo in modelos:
-            modelo_url = modelo.replace(" ", "%20")
-            for pagina in range(1, paginas + 1):
-                url = (
-                    f"https://www.autoscout24.es/lst/?sort=standard&desc=0&cy=E&"
-                    f"search_id=&makeModelVariant1.modelDescription={modelo_url}"
-                    f"&pricefrom={precio_min}&priceto={precio_max}&page={pagina}"
-                )
+            page = 1
+            while True:
+                url = f"https://www.autoscout24.com/lst?sort=standard&desc=0&ustate=N%2CU&atype=C&cy=E&pricefrom={precio_min}&priceto={precio_max}&page={page}&model={modelo.replace(' ', '%20')}"
+
                 async with session.get(url) as response:
-                    if response.status == 200:
-                        html = await response.text()
-                        soup = BeautifulSoup(html, 'html.parser')
-                        anuncios = soup.find_all('article', class_='cl-list-element')
+                    if response.status != 200:
+                        print(f"⚠️ Error en petición AutoScout24 para modelo {modelo}: {response.status}")
+                        break
 
-                        for anuncio in anuncios:
-                            try:
-                                titulo_tag = anuncio.find('h2')
-                                precio_tag = anuncio.find('span', class_='cldt-price')
-                                km_ano_tags = anuncio.find_all('span', class_='cldt-stage-basic-data')
+                    data = await response.json()
 
-                                enlace_tag = anuncio.find('a', href=True)
+                    # Si data es lista directamente
+                    if isinstance(data, list):
+                        items = data
+                    else:
+                        items = data.get("items", [])
 
-                                titulo = titulo_tag.get_text(strip=True) if titulo_tag else "Título no disponible"
-                                precio = precio_tag.get_text(strip=True) if precio_tag else "Precio no disponible"
+                    if not items:
+                        break  # no más resultados
 
-                                kms = "Km no disponible"
-                                ano = "Año no disponible"
-                                if km_ano_tags:
-                                    if len(km_ano_tags) >= 2:
-                                        kms = km_ano_tags[0].get_text(strip=True)
-                                        ano = km_ano_tags[1].get_text(strip=True)
+                    for item in items:
+                        titulo = item.get("title", "Sin título")
+                        precio = item.get("price", "¿?")
+                        enlace = f"https://www.autoscout24.com{item.get('url', '')}"
 
-                                enlace = "https://www.autoscout24.es" + enlace_tag['href'] if enlace_tag else "URL no disponible"
+                        resultados.append({
+                            "titulo": titulo,
+                            "precio": f"{precio}€",
+                            "url": enlace,
+                        })
 
-                                resultados.append({
-                                    'titulo': titulo,
-                                    'precio': precio,
-                                    'kilometros': kms,
-                                    'anio': ano,
-                                    'url': enlace
-                                })
-                            except Exception as e:
-                                print(f"Error procesando anuncio AutoScout24: {e}")
+                    page += 1
 
     return resultados
