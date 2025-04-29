@@ -11,7 +11,7 @@ TOKEN = os.getenv('TOKEN')
 
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
 PRECIO_MIN = 4000
-PRECIO_MAX = 12000
+PRECIO_MAX = 18000
 
 async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.data['chat_id']
