@@ -12,10 +12,8 @@ from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
 
-# Modelos para scrapers de búsqueda por texto
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
 
-# Modelos para coches.net (requiere MakeId y ModelId)
 MODELOS_COCHESNET = {
     'rifter': (33, 1252),
     'berlingo combi': (15, 1127),
@@ -24,7 +22,7 @@ MODELOS_COCHESNET = {
 }
 
 PRECIO_MIN = 4000
-PRECIO_MAX = 18000  # Puedes ajustar este precio
+PRECIO_MAX = 18000
 
 async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.data['chat_id']
@@ -56,7 +54,7 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
 
     context.job_queue.run_repeating(
         buscar_ofertas,
-        interval=600,  # 10 minutos
+        interval=600,
         first=10,
         data={'chat_id': chat_id}
     )
@@ -73,7 +71,6 @@ if __name__ == "__main__":
         asyncio.run(main())
     except RuntimeError as e:
         if "already running" in str(e):
-            import nest_asyncio
             nest_asyncio.apply()
             loop = asyncio.get_event_loop()
             loop.create_task(main())
