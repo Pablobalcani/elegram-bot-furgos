@@ -1,5 +1,6 @@
 import os
 import asyncio
+import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 from scrapers.milanuncios import buscar_milanuncios
@@ -11,21 +12,26 @@ from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
 
+# Modelos para scrapers de búsqueda por texto
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
+
+# Modelos para coches.net (requiere MakeId y ModelId)
 MODELOS_COCHESNET = {
     'rifter': (33, 1252),
     'berlingo combi': (15, 1127),
     'tourneo courier': (14, 694),
     'doblo': (23, 868)
 }
+
 PRECIO_MIN = 4000
-PRECIO_MAX = 18000
+PRECIO_MAX = 18000  # Puedes ajustar este precio
 
 async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.data['chat_id']
     await context.bot.send_message(chat_id=chat_id, text="🔍 Buscando ofertas...")
 
     resultados = []
+
     try:
         resultados += await buscar_milanuncios(MODELOS, PRECIO_MIN, PRECIO_MAX)
         resultados += await buscar_cochesnet(MODELOS_COCHESNET, PRECIO_MIN, PRECIO_MAX)
@@ -46,23 +52,23 @@ async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    await update.message.reply_text("🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
+    await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
+
     context.job_queue.run_repeating(
         buscar_ofertas,
-        interval=600,
-        first=5,
+        interval=600,  # 10 minutos
+        first=10,
         data={'chat_id': chat_id}
     )
 
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
+
     print("✅ Bot iniciado...")
     await app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
-
     try:
         asyncio.run(main())
     except RuntimeError as e:
