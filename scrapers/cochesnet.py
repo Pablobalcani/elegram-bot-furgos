@@ -4,7 +4,6 @@ import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 from scrapers.milanuncios import buscar_milanuncios
-from scrapers.cochesnet import buscar_cochesnet
 from scrapers.wallapop import buscar_wallapop
 from scrapers.autocasion import buscar_autocasion
 from scrapers.autoscout24 import buscar_autoscout24
