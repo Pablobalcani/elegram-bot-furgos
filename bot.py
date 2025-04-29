@@ -62,7 +62,7 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).post_init(lambda app: app.job_queue).build()
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
