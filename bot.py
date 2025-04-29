@@ -1,7 +1,6 @@
 import os
-import asyncio
-import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import asyncio
 from scrapers.milanuncios import buscar_milanuncios
 from scrapers.wallapop import buscar_wallapop
 from scrapers.autocasion import buscar_autocasion
@@ -17,7 +16,7 @@ MODELOS_COCHESNET = {
     'rifter': (33, 1252),
     'berlingo combi': (15, 1127),
     'tourneo courier': (14, 694),
-    'doblo': (23, 868),
+    'doblo': (23, 868)
 }
 
 PRECIO_MIN = 4000
@@ -59,12 +58,7 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def main():
-    app = (
-        ApplicationBuilder()
-        .token(TOKEN)
-        .post_init(lambda app: app.job_queue)  # <--- IMPORTANTE
-        .build()
-    )
+    app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler('start', start))
 
@@ -72,5 +66,4 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    nest_asyncio.apply()
     asyncio.run(main())
