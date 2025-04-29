@@ -21,7 +21,7 @@ MODELOS_COCHESNET = {
 }
 
 PRECIO_MIN = 4000
-PRECIO_MAX = 18000  # Puedes ajustar
+PRECIO_MAX = 18000
 
 async def buscar_ofertas(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.data['chat_id']
@@ -51,15 +51,21 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    context.job_queue.run_repeating(
+    context.application.job_queue.run_repeating(
         buscar_ofertas,
-        interval=600,  # 10 minutos
+        interval=600,
         first=10,
         data={'chat_id': chat_id}
     )
 
 async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .post_init(lambda app: app.job_queue)  # <--- IMPORTANTE
+        .build()
+    )
+
     app.add_handler(CommandHandler('start', start))
 
     print("✅ Bot iniciado...")
