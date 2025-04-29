@@ -12,7 +12,11 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        anuncios = data.get('listAds', [])
+
+                        if isinstance(data, list) and data and isinstance(data[0], dict):
+                            anuncios = data[0].get('listAds', [])
+                        else:
+                            anuncios = []
 
                         for anuncio in anuncios:
                             titulo = anuncio.get('title', 'Sin título')
