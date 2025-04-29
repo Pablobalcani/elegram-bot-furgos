@@ -12,8 +12,10 @@ from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
 
+# Modelos para scrapers de búsqueda por texto
 MODELOS = ['rifter', 'berlingo combi', 'tourneo courier', 'doblo']
 
+# Modelos para coches.net (requiere MakeId y ModelId)
 MODELOS_COCHESNET = {
     'rifter': (33, 1252),
     'berlingo combi': (15, 1127),
@@ -52,7 +54,7 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    context.application.job_queue.run_repeating(
+    context.job_queue.run_repeating(
         buscar_ofertas,
         interval=600,
         first=10,
@@ -60,11 +62,11 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).post_init(lambda app: app.job_queue).build()
     app.add_handler(CommandHandler('start', start))
     print("✅ Bot iniciado...")
     await app.run_polling()
 
 if __name__ == "__main__":
     nest_asyncio.apply()
-    asyncio.run(main())
+    asyncio.get_event_loop().run_until_complete(main())
