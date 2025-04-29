@@ -1,55 +1,37 @@
 import aiohttp
 
-MAKE_MODEL_IDS = {
-    'rifter': (33, 1252),
-    'berlingo combi': (11, 189),
-    'tourneo courier': (15, 1127),
-    'doblo': (14, 694),
-}
-
-async def buscar_cochesnet(modelos, precio_min, precio_max):
+async def buscar_cochesnet(modelos, precios):
     resultados = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Origin": "https://www.coches.net",
-        "Referer": "https://www.coches.net/",
-        "x-adevinta-channel": "web-desktop",
-    }
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-        for modelo in modelos:
-            ids = MAKE_MODEL_IDS.get(modelo.lower())
-            if not ids:
-                print(f"⚠️ IDs no encontrados para modelo {modelo}")
-                continue
+    async with aiohttp.ClientSession() as session:
+        for modelo, ids in modelos.items():
             make_id, model_id = ids
 
-            url = "https://web.gw.coches.net/semantic/segunda-mano/"
-            params = {
-                "MakeIds[0]": make_id,
-                "ModelIds[0]": model_id,
-                "PriceFrom": precio_min,
-                "PriceTo": precio_max,
-            }
+            url = f"https://web.gw.coches.net/semantic/segunda-mano/?MakeIds%5B0%5D={make_id}&ModelIds%5B0%5D={model_id}"
 
-            async with session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    anuncios = data.get('listAds', [])
+            try:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        anuncios = data.get('listAds', [])
 
-                    for anuncio in anuncios:
-                        titulo = anuncio.get('title', 'Sin título')
-                        precio = anuncio.get('price', 'Sin precio')
-                        enlace = f"https://www.coches.net{anuncio.get('url', '')}"
+                        for anuncio in anuncios:
+                            titulo = anuncio.get('title', 'Sin título')
+                            precio = anuncio.get('price', 0)
+                            enlace = anuncio.get('url', '')
 
-                        resultados.append({
-                            'titulo': titulo,
-                            'precio': f"{precio}€",
-                            'url': enlace
-                        })
-                else:
-                    print(f"⚠️ Error en petición coches.net para modelo {modelo}: {response.status}")
+                            resultados.append({
+                                'titulo': titulo,
+                                'precio': f"{precio}€",
+                                'url': enlace
+                            })
+
+                    elif response.status == 404:
+                        print(f"ℹ️ No hay coches disponibles para {modelo} (404).")
+                    else:
+                        print(f"⚠️ Error inesperado coches.net para modelo {modelo}: {response.status}")
+
+            except Exception as e:
+                print(f"⚠️ Excepción en petición coches.net para {modelo}: {e}")
 
     return resultados
