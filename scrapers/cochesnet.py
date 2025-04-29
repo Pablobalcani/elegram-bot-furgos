@@ -1,45 +1,45 @@
 import aiohttp
-from bs4 import BeautifulSoup
 
 async def buscar_cochesnet(modelos, precio_min, precio_max):
     resultados = []
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept-Language": "es-ES,es;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "application/json",
+        "x-adevinta-channel": "web-desktop",
     }
 
     async with aiohttp.ClientSession(headers=headers) as session:
         for modelo in modelos:
-            modelo_url = modelo.replace(' ', '-')
-            url = f"https://www.coches.net/segunda-mano/{modelo_url}/?PriceFrom={precio_min}&PriceTo={precio_max}"
+            # Aquí adaptamos para cada modelo
+            params = {
+                "text": modelo,
+                "price_from": precio_min,
+                "price_to": precio_max,
+                "rows": 20,  # número de resultados (puedes subirlo)
+                "sort": "published_at desc",  # los más nuevos primero
+            }
+            url = "https://web.gw.coches.net/semantic/segunda-mano/"
 
             try:
-                async with session.get(url) as response:
+                async with session.get(url, params=params) as response:
                     if response.status == 200:
-                        html = await response.text()
-                        soup = BeautifulSoup(html, 'html.parser')
+                        data = await response.json()
+                        items = data.get("items", [])
 
-                        anuncios = soup.find_all('article', class_='Card')
+                        for item in items:
+                            titulo = item.get('title', 'Sin título')
+                            precio = item.get('price', 0)
+                            enlace = f"https://coches.net{item.get('url', '')}"
 
-                        for anuncio in anuncios:
-                            titulo_tag = anuncio.find('h2', class_='Card-title')
-                            precio_tag = anuncio.find('span', class_='Card-price')
-                            link_tag = anuncio.find('a', href=True)
-
-                            if titulo_tag and precio_tag and link_tag:
-                                titulo = titulo_tag.text.strip()
-                                precio = precio_tag.text.strip()
-                                enlace = "https://www.coches.net" + link_tag['href']
-
-                                resultados.append({
-                                    'titulo': titulo,
-                                    'precio': precio,
-                                    'url': enlace
-                                })
+                            resultados.append({
+                                "titulo": titulo,
+                                "precio": f"{precio}€",
+                                "url": enlace,
+                            })
                     else:
                         print(f"⚠️ Error en petición coches.net para modelo {modelo}: {response.status}")
             except Exception as e:
-                print(f"⚠️ Excepción en petición coches.net para modelo {modelo}: {e}")
+                print(f"⚠️ Excepción en coches.net para modelo {modelo}: {e}")
 
     return resultados
