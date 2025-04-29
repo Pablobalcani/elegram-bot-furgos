@@ -1,12 +1,11 @@
 import aiohttp
 
-async def buscar_cochesnet(modelos, precios):
+async def buscar_cochesnet(modelos, precio_min, precio_max):
     resultados = []
 
     async with aiohttp.ClientSession() as session:
         for modelo, ids in modelos.items():
             make_id, model_id = ids
-
             url = f"https://web.gw.coches.net/semantic/segunda-mano/?MakeIds%5B0%5D={make_id}&ModelIds%5B0%5D={model_id}"
 
             try:
@@ -30,7 +29,6 @@ async def buscar_cochesnet(modelos, precios):
                         print(f"ℹ️ No hay coches disponibles para {modelo} (404).")
                     else:
                         print(f"⚠️ Error inesperado coches.net para modelo {modelo}: {response.status}")
-
             except Exception as e:
                 print(f"⚠️ Excepción en petición coches.net para {modelo}: {e}")
 
