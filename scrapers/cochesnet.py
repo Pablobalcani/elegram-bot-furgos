@@ -18,9 +18,15 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
                 continue
             make_id, model_id = ids
 
-            url = f"https://web.gw.coches.net/semantic/segunda-mano/?MakeIds[0]={make_id}&ModelIds[0]={model_id}"
+            url = "https://web.gw.coches.net/semantic/segunda-mano/"
+            params = {
+                "MakeIds[0]": make_id,
+                "ModelIds[0]": model_id,
+                "PriceFrom": precio_min,
+                "PriceTo": precio_max,
+            }
 
-            async with session.get(url) as response:
+            async with session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
                     anuncios = data.get('listAds', [])
@@ -39,4 +45,3 @@ async def buscar_cochesnet(modelos, precio_min, precio_max):
                     print(f"⚠️ Error en petición coches.net para modelo {modelo}: {response.status}")
 
     return resultados
- 
