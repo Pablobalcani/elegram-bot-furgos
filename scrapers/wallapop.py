@@ -1,53 +1,43 @@
 import aiohttp
+from bs4 import BeautifulSoup
 
 async def buscar_wallapop(modelos, precio_min, precio_max):
     resultados = []
 
-    headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Content-Type": "application/json;charset=UTF-8",
-        "User-Agent": "Wallapop/1.0.0 (Linux; Android 10)",  # Móvil simulado
-    }
-
-    search_url = "https://api.wallapop.com/api/v3/general/search"
-
-    async with aiohttp.ClientSession(headers=headers) as session:
+    async with aiohttp.ClientSession() as session:
         for modelo in modelos:
-            payload = {
-                "keywords": modelo,
-                "filters": {
-                    "price": {
-                        "min": precio_min,
-                        "max": precio_max
-                    }
-                },
-                "order_by": "newest",
-                "latitude": 40.416775,
-                "longitude": -3.703790,
-                "distance": 50000  # 50km
+            search_url = f"https://es.wallapop.com/app/search?keywords={modelo}&filters_source=quick_filters"
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Accept-Language": "es-ES,es;q=0.9",
             }
 
             try:
-                async with session.post(search_url, json=payload) as response:
+                async with session.get(search_url, headers=headers) as response:
                     if response.status == 200:
-                        data = await response.json()
-                        items = data.get("search_objects", [])
+                        html = await response.text()
+                        soup = BeautifulSoup(html, 'html.parser')
 
-                        for item in items:
-                            titulo = item.get('title', 'Sin título')
-                            precio = item.get('price', 0)
-                            item_id = item.get('id', '')
+                        cards = soup.find_all('article', {'data-testid': 'item-card'})
 
-                            enlace = f"https://es.wallapop.com/item/{item_id}"
+                        for card in cards:
+                            title_tag = card.find('p', {'data-testid': 'item-title'})
+                            price_tag = card.find('span', {'data-testid': 'item-price'})
+                            link_tag = card.find('a', href=True)
 
-                            resultados.append({
-                                "titulo": titulo,
-                                "precio": f"{precio}€",
-                                "url": enlace,
-                            })
+                            if title_tag and price_tag and link_tag:
+                                precio = int(price_tag.text.replace('€', '').replace('.', '').strip())
+                                if precio_min <= precio <= precio_max:
+                                    resultados.append({
+                                        "titulo": title_tag.text.strip(),
+                                        "precio": f"{precio}€",
+                                        "url": f"https://es.wallapop.com{link_tag['href']}"
+                                    })
                     else:
                         print(f"⚠️ Error en petición Wallapop para modelo {modelo}: {response.status}")
+
             except Exception as e:
-                print(f"⚠️ Excepción buscando en Wallapop para {modelo}: {e}")
+                print(f"⚠️ Excepción scraping Wallapop para modelo {modelo}: {e}")
 
     return resultados
