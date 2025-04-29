@@ -4,10 +4,10 @@ import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 from scrapers.milanuncios import buscar_milanuncios
-from scrapers.cochesnet import buscar_cochesnet
 from scrapers.wallapop import buscar_wallapop
 from scrapers.autocasion import buscar_autocasion
 from scrapers.autoscout24 import buscar_autoscout24
+from scrapers.cochesnet import buscar_cochesnet
 from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
@@ -52,7 +52,7 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await context.bot.send_message(chat_id=chat_id, text="🤖 Bot activado. Buscaré ofertas cada 10 minutos.")
 
-    context.job_queue.run_repeating(
+    context.application.job_queue.run_repeating(
         buscar_ofertas,
         interval=600,
         first=10,
@@ -62,10 +62,9 @@ async def start(update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler('start', start))
-
     print("✅ Bot iniciado...")
     await app.run_polling()
 
 if __name__ == "__main__":
     nest_asyncio.apply()
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())
