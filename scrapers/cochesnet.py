@@ -10,7 +10,15 @@ MAKE_MODEL_IDS = {
 async def buscar_cochesnet(modelos, precio_min, precio_max):
     resultados = []
 
-    async with aiohttp.ClientSession() as session:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Origin": "https://www.coches.net",
+        "Referer": "https://www.coches.net/",
+        "x-adevinta-channel": "web-desktop",
+    }
+
+    async with aiohttp.ClientSession(headers=headers) as session:
         for modelo in modelos:
             ids = MAKE_MODEL_IDS.get(modelo.lower())
             if not ids:
