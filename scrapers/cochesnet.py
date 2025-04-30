@@ -1,22 +1,24 @@
 from bs4 import BeautifulSoup
 import aiohttp
-import asyncio
 
-# URLs estáticas basadas en los modelos específicos
 URLS_COCHESNET = {
     "rifter": "https://www.coches.net/segunda-mano/?MakeIds%5B0%5D=33&ModelIds%5B0%5D=1252",
     "berlingo combi": "https://www.coches.net/segunda-mano/?MakeIds%5B0%5D=15&ModelIds%5B0%5D=1127",
     "tourneo courier": "https://www.coches.net/segunda-mano/?MakeIds%5B0%5D=14&ModelIds%5B0%5D=694"
 }
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Accept-Language": "es-ES,es;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Referer": "https://www.coches.net/",
+    "Connection": "keep-alive"
+}
+
 async def buscar_cochesnet(modelos, precio_min, precio_max):
     resultados = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
-    async with aiohttp.ClientSession(headers=headers) as session:
+    async with aiohttp.ClientSession(headers=HEADERS) as session:
         for modelo, url_base in URLS_COCHESNET.items():
             for page in range(1, 4):
                 url = f"{url_base}&page={page}&PriceFrom={precio_min}&PriceTo={precio_max}"
