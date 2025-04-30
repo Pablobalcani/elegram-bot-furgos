@@ -4,7 +4,7 @@ import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 from scrapers.wallapop import buscar_wallapop
-from scrapers.cochesnet import buscar_cochesnet
+from scrapers.cochesnet import buscar_cochesnet_html as buscar_cochesnet
 from utils.formatting import formatear_mensaje
 
 TOKEN = os.getenv('TOKEN')
